@@ -1,66 +1,50 @@
+const config = {
+  messageTypeCurrentPlaybackRate: 'currentPlaybackRate',
+  messageTypeSetPlaybackRate: 'setPlaybackRate',
+  messageTypeGetPlaybackRate: 'getPlaybackRate',
+}
+
 document.addEventListener(
-  "DOMContentLoaded",
+  'DOMContentLoaded',
   function () {
-    console.log("Loaded Extension Popup HTML")
+    sendMessage({ type: config.messageTypeGetPlaybackRate }, handleMessage)
 
-    chrome.runtime.onConnect.addListener(function (portFrom) {
-      if (portFrom.name === "playback-speed-extension-port") {
-        portFrom.onMessage.addListener(function (message) {
-          handleMessage(message)
-        })
-      }
+    addOnClickHandler('normalPlaybackRate', function () {
+      sendMessage({ type: config.messageTypeSetPlaybackRate, value: 1 }, handleMessage)
     })
 
-    sendMessage({ type: "getPlaybackRate" })
-
-    addOnClickHandler("doubleSpeed", () => {
-      sendMessage({ type: "setPlaybackRate", value: 2 })
+    addOnClickHandler('doublePlaybackRate', function () {
+      sendMessage({ type: config.messageTypeSetPlaybackRate, value: 2 }, handleMessage)
     })
 
-    addOnClickHandler("tripleSpeed", () => {
-      sendMessage({ type: "setPlaybackRate", value: 3 })
+    addOnClickHandler('triplePlaybackRate', function () {
+      sendMessage({ type: config.messageTypeSetPlaybackRate, value: 3 }, handleMessage)
     })
   },
   false
 )
 
-function sendMessage(message) {
+function sendMessage(message, callback) {
   chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-    chrome.tabs.sendMessage(tabs[0].id, message)
+    chrome.tabs.sendMessage(tabs[0].id, message, callback) //, callback)
   })
 }
 
-function displayCurrentSpeed(currentSpeed) {
-  const currentSpeedElement = document.getElementById("currentSpeed")
-  currentSpeedElement.value = currentSpeed
+function displayCurrentPlaybackRate(currentPlaybackRate) {
+  const currentPlaybackRateElement = document.getElementById('currentPlaybackRate')
+  currentPlaybackRateElement.innerHTML = currentPlaybackRate
 }
 
-function handleMessage(message) {
-  if (message.type == "currecurrentPlaybackRatentSpeed") {
-    const currentSpeed = message.value
-    console.log(`Current Speed is ${currentSpeed}`)
-    displayCurrentSpeed(currentSpeed)
+function handleMessage(req) {
+  switch (req.type) {
+    case config.messageTypeCurrentPlaybackRate:
+      const currentPlaybackRate = req.value
+      displayCurrentPlaybackRate(currentPlaybackRate)
+      return
   }
 }
 
 function addOnClickHandler(elementId, handlerFunc) {
-  const checkPageButton = document.getElementById(elementId)
-  checkPageButton.addEventListener("click", handlerFunc)
-  //     function () {
-  //       chrome.tabs.getSelected(null, function (tab) {
-  //         d = document
-  //         const f = d.createElement("form")
-  //         f.action = "http://gtmetrix.com/analyze.html?bm"
-  //         f.method = "post"
-  //         const i = d.createElement("input")
-  //         i.type = "hidden"
-  //         i.name = "url"
-  //         i.value = tab.url
-  //         f.appendChild(i)
-  //         d.body.appendChild(f)
-  //         f.submit()
-  //       })
-  //     },
-  //     false
-  //   )
+  const element = document.getElementById(elementId)
+  element.addEventListener('click', handlerFunc)
 }
