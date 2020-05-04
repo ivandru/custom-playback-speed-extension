@@ -1,10 +1,8 @@
 {
   "manifest_version": 2,
-
-  "name": "Custom Playback Speed Manager",
-  "description": "This extension will allow you to tweak the playback speed on a specific website",
+  "name": "Playback Speed Manager",
+  "description": "This extension will allow you to tweak the playback speed on any page with HTML5 video",
   "version": "0.0.1",
-
   "browser_action": {
     "default_icon": "icon.png",
     "default_popup": "popup.html"
@@ -15,6 +13,5 @@
       "matches": ["http://*/*", "https://*/*"],
       "js": ["content-script.js"]
     }
-  ],
-  "web_accessible_resources": ["injected-script.js"]
+  ]
 }
