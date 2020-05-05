@@ -2,12 +2,21 @@ const config = {
   messageTypeCurrentPlaybackRate: 'currentPlaybackRate',
   messageTypeSetPlaybackRate: 'setPlaybackRate',
   messageTypeGetPlaybackRate: 'getPlaybackRate',
+  messageTypeChangePlaybackRateByDelta: 'changePlaybackRateByDelta',
 }
 
 document.addEventListener(
   'DOMContentLoaded',
   function () {
     sendMessage({ type: config.messageTypeGetPlaybackRate }, handleMessage)
+
+    addOnClickHandler('decreasePlaybackRate', function () {
+      sendMessage({ type: config.messageTypeChangePlaybackRateByDelta, value: -0.1 }, handleMessage)
+    })
+
+    addOnClickHandler('increasePlaybackRate', function () {
+      sendMessage({ type: config.messageTypeChangePlaybackRateByDelta, value: 0.1 }, handleMessage)
+    })
 
     addOnClickHandler('normalPlaybackRate', function () {
       sendMessage({ type: config.messageTypeSetPlaybackRate, value: 1 }, handleMessage)
@@ -32,7 +41,11 @@ function sendMessage(message, callback) {
 
 function displayCurrentPlaybackRate(currentPlaybackRate) {
   const currentPlaybackRateElement = document.getElementById('currentPlaybackRate')
-  currentPlaybackRateElement.innerHTML = currentPlaybackRate
+  if (!currentPlaybackRate) {
+    currentPlaybackRate = 1
+  }
+
+  currentPlaybackRateElement.innerHTML = currentPlaybackRate.toPrecision(2)
 }
 
 function handleMessage(req) {

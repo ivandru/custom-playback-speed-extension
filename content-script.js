@@ -2,6 +2,7 @@ const config = {
   messageTypeCurrentPlaybackRate: 'currentPlaybackRate',
   messageTypeSetPlaybackRate: 'setPlaybackRate',
   messageTypeGetPlaybackRate: 'getPlaybackRate',
+  messageTypeChangePlaybackRateByDelta: 'changePlaybackRateByDelta',
 
   videoTag: 'video',
 }
@@ -12,6 +13,10 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 
 function handleMessage(req, res) {
   switch (req.type) {
+    case config.messageTypeChangePlaybackRateByDelta:
+      changePlaybackRateByDelta(req.value)
+      res({ type: config.messageTypeCurrentPlaybackRate, value: getPlaybackRate() })
+      return
     case config.messageTypeSetPlaybackRate:
       setPlaybackRate(req.value)
       res({ type: config.messageTypeCurrentPlaybackRate, value: getPlaybackRate() })
@@ -28,6 +33,10 @@ function getVideoElement() {
 
 function setPlaybackRate(rate) {
   getVideoElement().playbackRate = rate
+}
+
+function changePlaybackRateByDelta(rateDelta) {
+  getVideoElement().playbackRate += rateDelta
 }
 
 function getPlaybackRate() {
