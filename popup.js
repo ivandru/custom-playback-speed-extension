@@ -3,11 +3,15 @@ const config = {
   messageTypeSetPlaybackRate: 'setPlaybackRate',
   messageTypeGetPlaybackRate: 'getPlaybackRate',
   messageTypeChangePlaybackRateByDelta: 'changePlaybackRateByDelta',
+  localStorageSettingsPlaybackSpeedDeltaKey: 'playbackSpeedDelta',
+  localStorageSettingsPlaybackSpeedDeltaDefaultValue: 0.1,
 }
 
 document.addEventListener(
   'DOMContentLoaded',
   function () {
+    alert(JSON.stringify(getPlaybackRateDelta()))
+
     sendMessage({ type: config.messageTypeGetPlaybackRate }, handleMessage)
 
     addOnClickHandler('decreasePlaybackRate', function () {
@@ -32,6 +36,16 @@ document.addEventListener(
   },
   false
 )
+
+function getPlaybackRateDelta() {
+  return chrome.storage.sync.get([config.localStorageSettingsPlaybackSpeedDeltaKey], (res) => {
+    if (!res.hasOwnProperty(config.localStorageSettingsPlaybackSpeedDeltaKey)) {
+      chrome.storage.sync.set({ playbackSpeedDelta: config.localStorageSettingsPlaybackSpeedDeltaDefaultValue })
+      return config.localStorageSettingsPlaybackSpeedDeltaDefaultValue
+    }
+    return res[config.localStorageSettingsPlaybackSpeedDeltaKey]
+  })
+}
 
 function sendMessage(message, callback) {
   chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
