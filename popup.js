@@ -10,8 +10,6 @@ const config = {
 document.addEventListener(
   'DOMContentLoaded',
   function () {
-    alert(JSON.stringify(getPlaybackRateDelta()))
-
     sendMessage({ type: config.messageTypeGetPlaybackRate }, handleMessage)
 
     addOnClickHandler('decreasePlaybackRate', function () {
