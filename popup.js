@@ -43,6 +43,7 @@ function getPlaybackRateDelta() {
       chrome.storage.sync.set({ playbackSpeedDelta: config.localStorageSettingsPlaybackSpeedDeltaDefaultValue })
       return config.localStorageSettingsPlaybackSpeedDeltaDefaultValue
     }
+    // Remove this
     return res[config.localStorageSettingsPlaybackSpeedDeltaKey]
   })
 }
