@@ -10,6 +10,7 @@ document.addEventListener(
   function () {
     sendMessage({ type: config.messageTypeGetPlaybackRate }, handleMessage)
 
+    //
     addOnClickHandler('decreasePlaybackRate', function () {
       sendMessage({ type: config.messageTypeChangePlaybackRateByDelta, value: -0.1 }, handleMessage)
     })
