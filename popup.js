@@ -3,7 +3,7 @@ const config = {
   messageTypeSetPlaybackRate: 'setPlaybackRate',
   messageTypeGetPlaybackRate: 'getPlaybackRate',
   messageTypeChangePlaybackRateByDelta: 'changePlaybackRateByDelta',
-  localStorageSettingsPlaybackSpeedDeltaKey: 'playbackSpeedDelta',
+  localStorageSettingsPlaybackSpeedDeltaKey: 'playbackSpeedDelta-t',
   localStorageSettingsPlaybackSpeedDeltaDefaultValue: 0.1,
 }
 
@@ -31,18 +31,39 @@ document.addEventListener(
     addOnClickHandler('triplePlaybackRate', function () {
       sendMessage({ type: config.messageTypeSetPlaybackRate, value: 3 }, handleMessage)
     })
+
+    getPlaybackRateDelta()
   },
   false
 )
 
-function getPlaybackRateDelta() {
-  return chrome.storage.sync.get([config.localStorageSettingsPlaybackSpeedDeltaKey], (res) => {
-    if (!res.hasOwnProperty(config.localStorageSettingsPlaybackSpeedDeltaKey)) {
-      chrome.storage.sync.set({ playbackSpeedDelta: config.localStorageSettingsPlaybackSpeedDeltaDefaultValue })
-      return config.localStorageSettingsPlaybackSpeedDeltaDefaultValue
-    }
-    // Remove this
-    return res[config.localStorageSettingsPlaybackSpeedDeltaKey]
+async function getPlaybackRateDelta() {
+  return await localStorageGet({
+    key: config.localStorageSettingsPlaybackSpeedDeltaKey,
+    value: config.localStorageSettingsPlaybackSpeedDeltaDefaultValue,
+  })
+}
+
+function localStorageGet(obj) {
+  const getObj = {}
+  getObj[obj.key] = obj.value
+
+  return new Promise((resolve, reject) => {
+    chrome.storage.sync.get(getObj, (syncRes) => {
+      resolve(syncRes[obj.key])
+    })
+  })
+}
+
+function localStorageSet(obj) {
+  const getObj = {}
+  getObj[obj.key] = obj.value
+
+  return new Promise((resolve, reject) => {
+    chrome.storage.sync.set(getObj, (syncRes) => {
+      alert(JSON.stringify(getObj) + ' ' + JSON.stringify(syncRes))
+      resolve(syncRes)
+    })
   })
 }
 
