@@ -3,21 +3,29 @@ const config = {
   messageTypeSetPlaybackRate: 'setPlaybackRate',
   messageTypeGetPlaybackRate: 'getPlaybackRate',
   messageTypeChangePlaybackRateByDelta: 'changePlaybackRateByDelta',
-  localStorageSettingsPlaybackSpeedDeltaKey: 'playbackSpeedDelta-t',
-  localStorageSettingsPlaybackSpeedDeltaDefaultValue: 0.1,
+
+  localStorageSettingsPlaybackSpeedDelta: { key: 'playbackSpeedDelta', defaultValue: 0.1 },
+}
+
+let state = {
+  playbackRateDelta: {
+    settingsKey: config.localStorageSettingsPlaybackSpeedDelta.key,
+    value: config.localStorageSettingsPlaybackSpeedDelta.defaultValue,
+    htmlId: 'currentPlaybackRateDelta',
+  },
 }
 
 document.addEventListener(
   'DOMContentLoaded',
-  function () {
+  async function () {
     sendMessage({ type: config.messageTypeGetPlaybackRate }, handleMessage)
 
     addOnClickHandler('decreasePlaybackRate', function () {
-      sendMessage({ type: config.messageTypeChangePlaybackRateByDelta, value: -0.1 }, handleMessage)
+      sendMessage({ type: config.messageTypeChangePlaybackRateByDelta, value: -state.playbackRateDelta.value }, handleMessage)
     })
 
     addOnClickHandler('increasePlaybackRate', function () {
-      sendMessage({ type: config.messageTypeChangePlaybackRateByDelta, value: 0.1 }, handleMessage)
+      sendMessage({ type: config.messageTypeChangePlaybackRateByDelta, value: state.playbackRateDelta.value }, handleMessage)
     })
 
     addOnClickHandler('normalPlaybackRate', function () {
@@ -32,16 +40,27 @@ document.addEventListener(
       sendMessage({ type: config.messageTypeSetPlaybackRate, value: 3 }, handleMessage)
     })
 
-    getPlaybackRateDelta()
+    addOnClickHandler('saveSettings', async function () {
+      const val = parseFloat(getValueFromHtml('getPlaybackRateDelta'))
+      state.playbackRateDelta.value = await setPlaybackRateDelta({ key: config.localStorageSettingsPlaybackSpeedDelta.key, value: val })
+      setToHtml(state.playbackRateDelta.htmlId, state.playbackRateDelta.value)
+    })
+
+    state.playbackRateDelta.value = await getPlaybackRateDeltaFromLocalStorage()
+    setToHtml(state.playbackRateDelta.htmlId, state.playbackRateDelta.value)
   },
   false
 )
 
-async function getPlaybackRateDelta() {
+async function getPlaybackRateDeltaFromLocalStorage() {
   return await localStorageGet({
-    key: config.localStorageSettingsPlaybackSpeedDeltaKey,
-    value: config.localStorageSettingsPlaybackSpeedDeltaDefaultValue,
+    key: config.localStorageSettingsPlaybackSpeedDelta.key,
+    value: config.localStorageSettingsPlaybackSpeedDelta.defaultValue,
   })
+}
+
+function getValueFromHtml(elementId) {
+  return document.getElementById(elementId).value
 }
 
 function localStorageGet(obj) {
@@ -61,14 +80,13 @@ function localStorageSet(obj) {
 
   return new Promise((resolve, reject) => {
     chrome.storage.sync.set(getObj, (syncRes) => {
-      alert(JSON.stringify(getObj) + ' ' + JSON.stringify(syncRes))
-      resolve(syncRes)
+      resolve(obj.value)
     })
   })
 }
 
-function setPlaybackRateDelta(rateDelta) {
-  chrome.storage.sync.set({ playbackSpeedDelta: config.localStorageSettingsPlaybackSpeedDeltaDefaultValue })
+async function setPlaybackRateDelta(obj) {
+  return await localStorageSet(obj)
 }
 
 function sendMessage(message, callback) {
@@ -84,6 +102,10 @@ function displayCurrentPlaybackRate(currentPlaybackRate) {
   }
 
   currentPlaybackRateElement.innerHTML = currentPlaybackRate.toPrecision(2)
+}
+
+function setToHtml(elementId, value) {
+  document.getElementById(elementId).innerHTML = value
 }
 
 function handleMessage(req) {
