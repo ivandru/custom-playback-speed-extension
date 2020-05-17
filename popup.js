@@ -5,6 +5,7 @@ const config = {
   messageTypeChangePlaybackRateByDelta: 'changePlaybackRateByDelta',
 
   localStorageSettingsPlaybackSpeedDelta: { key: 'playbackSpeedDelta', defaultValue: 0.1 },
+  localStorageSettingsPlaybackSpeedForWebsite: { key: 'playbackSpeed-', defaultValue: 1 },
 }
 
 let state = {
@@ -13,14 +14,25 @@ let state = {
     value: config.localStorageSettingsPlaybackSpeedDelta.defaultValue,
     htmlId: 'currentPlaybackRateDelta',
   },
+  playbackRate: {
+    settingsKey: config.localStorageSettingsPlaybackSpeedForWebsite.key,
+    value: config.localStorageSettingsPlaybackSpeedForWebsite.defaultValue,
+    htmlId: 'currentPlaybackRate',
+  },
+  website: {
+    value: '',
+  },
 }
 
 document.addEventListener(
   'DOMContentLoaded',
   async function () {
+    state.website.value = await getCurrentWebsite()
+    state.playbackRate.value = await getPlaybackRateForWebsiteFromLocalStorage(state.website.value)
+
+    sendMessage({ type: config.messageTypeSetPlaybackRate, value: state.playbackRate.value }, handleMessage)
     sendMessage({ type: config.messageTypeGetPlaybackRate }, handleMessage)
 
-    //
     addOnClickHandler('decreasePlaybackRate', function () {
       sendMessage({ type: config.messageTypeChangePlaybackRateByDelta, value: -state.playbackRateDelta.value }, handleMessage)
     })
@@ -57,6 +69,20 @@ async function getPlaybackRateDeltaFromLocalStorage() {
   return await localStorageGet({
     key: config.localStorageSettingsPlaybackSpeedDelta.key,
     value: config.localStorageSettingsPlaybackSpeedDelta.defaultValue,
+  })
+}
+
+async function getPlaybackRateForWebsiteFromLocalStorage(website) {
+  return await localStorageGet({
+    key: config.localStorageSettingsPlaybackSpeedForWebsite.key + website,
+    value: config.localStorageSettingsPlaybackSpeedForWebsite.defaultValue,
+  })
+}
+
+async function setPlaybackRateForWebsiteToLocalStorage(website, playbackSpeed) {
+  return await localStorageSet({
+    key: config.localStorageSettingsPlaybackSpeedForWebsite.key + website,
+    value: playbackSpeed,
   })
 }
 
@@ -109,10 +135,19 @@ function setToHtml(elementId, value) {
   document.getElementById(elementId).innerHTML = value
 }
 
+async function getCurrentWebsite() {
+  return await new Promise((resolve, reject) => {
+    chrome.tabs.query({ active: true, windowId: chrome.windows.WINDOW_ID_CURRENT }, function (tabs) {
+      resolve(tabs[0].url.match(/^(?:https?:\/\/)?(?:[^@\/\n]+@)?(?:www\.)?([^:\/?\n]+)/gim))
+    })
+  })
+}
+
 function handleMessage(req) {
   switch (req.type) {
     case config.messageTypeCurrentPlaybackRate:
       const currentPlaybackRate = req.value
+      getCurrentWebsite().then((website) => setPlaybackRateForWebsiteToLocalStorage(website, currentPlaybackRate))
       displayCurrentPlaybackRate(currentPlaybackRate)
       return
   }
